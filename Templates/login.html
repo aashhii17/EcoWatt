@@ -1,0 +1,61 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In | EcoWatt Energy</title>
+  <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+  <link rel="stylesheet" href="{% static 'css/enterprise.css' %}" />
+</head>
+<body style="background: var(--bg-app); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1.5rem;">
+
+  <div class="card" style="width: 100%; max-width: 420px; padding: 2.5rem; box-shadow: var(--shadow-md);">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <div class="brand-icon-box" style="width: 48px; height: 48px; margin: 0 auto 0.75rem auto;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
+          <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.4 19 2c1 2 2 4.1 2 8 0 5.5-4.5 10-10 10Z"></path>
+          <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
+        </svg>
+      </div>
+      <h1 style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em;">Welcome back to EcoWatt</h1>
+      <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.25rem;">Sign in to monitor your home energy & power bills</p>
+    </div>
+
+    {% if messages %}
+      <div style="margin-bottom: 1.25rem;">
+        {% for message in messages %}
+          <div class="alert-banner {% if message.tags == 'error' %}alert-banner-error{% else %}alert-banner-success{% endif %}">
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="POST" action="{% url 'login' %}">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="contact_no">Contact Number or Email</label>
+        <input type="text" id="contact_no" name="contact_no" class="form-control" placeholder="e.g. 9876543210 or email@domain.com" required />
+      </div>
+
+      <div class="form-group">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+          <label for="password" style="margin-bottom: 0;">Password</label>
+          <a href="{% url 'forgot_password' %}" style="font-size: 0.8rem; color: var(--brand-emerald); font-weight: 600; text-decoration: none;">Forgot password?</a>
+        </div>
+        <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required />
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.75rem; font-size: 0.95rem; margin-top: 0.5rem;">
+        <span>Sign In</span>
+      </button>
+    </form>
+
+    <div style="text-align: center; margin-top: 1.75rem; font-size: 0.85rem; color: var(--text-secondary);">
+      Don't have an account? <a href="{% url 'signup' %}" style="color: var(--brand-emerald); font-weight: 600; text-decoration: none;">Create Account</a>
+    </div>
+  </div>
+
+</body>
+</html>

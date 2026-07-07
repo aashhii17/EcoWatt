@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Asset Consumption Logs | VoltPulse Enterprise{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title-group">
+    <h1>Consumption Logs: {{ appliance.name }}</h1>
+    <p>Historical energy consumption records for {{ appliance.name }} ({{ appliance.power_rating }}W).</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Dashboard</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-container">
+    <table class="enterprise-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Consumption (kWh)</th>
+          <th>Operating Cost ($)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in consumptions %}
+          <tr>
+            <td><strong>{{ c.date }}</strong></td>
+            <td>{{ c.consumption_kwh }} kWh</td>
+            <td>${{ c.cost }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="3" style="text-align:center; color:var(--text-muted); padding:2rem;">No historical consumption records logged.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

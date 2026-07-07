@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Grid Administrator Portal | VoltPulse Enterprise{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title-group">
+    <h1>Grid Administrator Control Portal</h1>
+    <p>System-wide utility load analytics, organization profiles, and hardware asset governance.</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'export_user_data' %}" class="btn btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+      <span>Export All Telemetry (XLSX)</span>
+    </a>
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+      <span>User View</span>
+    </a>
+  </div>
+</div>
+
+<!-- System Summary Metrics Grid -->
+<section class="kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-label">Registered Organizations</span>
+      <div class="kpi-icon-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+      </div>
+    </div>
+    <div class="kpi-value-row">
+      <span class="kpi-value">{{ total_users }}</span>
+      <span class="kpi-unit">Profiles</span>
+    </div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-label">Monitored Assets</span>
+      <div class="kpi-icon-box" style="background: rgba(6, 182, 212, 0.12); color: #06b6d4;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+      </div>
+    </div>
+    <div class="kpi-value-row">
+      <span class="kpi-value">{{ total_appliances }}</span>
+      <span class="kpi-unit">Hardware Units</span>
+    </div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-label">Total Grid Load</span>
+      <div class="kpi-icon-box" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+      </div>
+    </div>
+    <div class="kpi-value-row">
+      <span class="kpi-value">{{ total_system_kwh }}</span>
+      <span class="kpi-unit">kWh</span>
+    </div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-label">Projected Utility Revenue</span>
+      <div class="kpi-icon-box" style="background: rgba(16, 185, 129, 0.12); color: #10b981;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="1" x2="12" y2="23"></line>
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+        </svg>
+      </div>
+    </div>
+    <div class="kpi-value-row">
+      <span class="kpi-value">${{ total_system_cost }}</span>
+      <span class="kpi-unit">USD</span>
+    </div>
+  </div>
+</section>
+
+<!-- Profiles & Asset Fleet Directory -->
+<div style="display:flex; flex-direction:column; gap:1.5rem;">
+  <h2 style="font-size:1.25rem; font-weight:800;">Managed User Organizations & Hardware Fleet</h2>
+
+  {% for profile in user_profiles %}
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border-subtle);">
+        <div>
+          <h3 style="font-size:1.1rem; font-weight:700; color:var(--brand-primary);">{{ profile.full_name }}</h3>
+          <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.2rem;">
+            Email: <strong>{{ profile.user.email }}</strong> | Contact: <strong>{{ profile.contact_number }}</strong> | Address: {{ profile.physical_address }}
+          </p>
+        </div>
+        <form method="post" action="{% url 'admin_remove_user' profile.id %}" onsubmit="return confirm('Revoke tenant {{ profile.full_name }} and purge telemetry data?');">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger btn-sm">Revoke User Account</button>
+        </form>
+      </div>
+
+      <div class="table-container">
+        <table class="enterprise-table">
+          <thead>
+            <tr>
+              <th>Asset / Appliance Name</th>
+              <th>Power Rating</th>
+              <th>Quantity</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in profile.appliances.all %}
+              <tr>
+                <td><strong>{{ a.name }}</strong></td>
+                <td><span class="badge badge-blue">{{ a.power_rating }} W</span></td>
+                <td>{{ a.quantity }}</td>
+                <td style="text-align: right;">
+                  <form method="post" action="{% url 'admin_remove_appliance' a.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                  </form>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" style="color:var(--text-muted); padding:1rem;">No hardware assets provisioned for this profile.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

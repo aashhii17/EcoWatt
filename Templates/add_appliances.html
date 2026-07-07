@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Appliance | EcoWatt Energy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title-group">
+    <h1>Add New Appliance</h1>
+    <p>Select your appliance details to calculate daily usage and energy bill impacts.</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+  </div>
+</div>
+
+<div class="card" style="max-width: 800px; margin: 0 auto; width: 100%;">
+  <!-- Steps Navbar -->
+  <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+    <div id="pill1" class="badge badge-emerald" style="flex: 1; padding: 0.75rem; text-align: center; justify-content: center; font-size: 0.85rem;">
+      1. Property Type
+    </div>
+    <div id="pill2" class="badge" style="flex: 1; padding: 0.75rem; text-align: center; justify-content: center; font-size: 0.85rem; background: var(--bg-hover); color: var(--text-muted); border: 1px solid var(--border-subtle);">
+      2. Appliance Details
+    </div>
+  </div>
+
+  <form id="applianceForm" method="post" action="{% url 'add_appliances' %}">
+    {% csrf_token %}
+
+    <!-- Step 1 -->
+    <div id="step1">
+      <div class="form-group">
+        <label for="purposeSelect">Select Property / Usage Category</label>
+        <select id="purposeSelect" name="purpose" class="form-control" required>
+          <option value="">-- Choose Category --</option>
+          <option value="home">Home / Apartment</option>
+          <option value="office">Commercial Office</option>
+          <option value="hospital">Medical / Healthcare</option>
+          <option value="factory">Industrial / Workshop</option>
+        </select>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:2rem;">
+        <button type="button" class="btn btn-primary" id="step1NextBtn" onclick="goToStep(2)" disabled>
+          <span>Next: Appliance Specs &rarr;</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div id="step2" style="display: none;">
+      <div id="applianceContainer"></div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-top:1.5rem;">
+        <button type="button" class="btn btn-secondary" onclick="addAppliance()">+ Add Another Appliance</button>
+        <div style="display:flex; gap:1rem;">
+          <button type="button" class="btn btn-secondary" onclick="goToStep(1)">&larr; Back</button>
+          <button type="submit" id="submitBtn" class="btn btn-primary" disabled>Save Appliance</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Template for Appliance Item -->
+<template id="applianceTemplate">
+  <div style="background: var(--bg-hover); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 1.25rem;">
+    <div class="form-group">
+      <label>Appliance Type</label>
+      <select class="form-control appliance-select" name="name[]" required></select>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Brand</label>
+        <select class="form-control brand-select" name="brand[]" required></select>
+      </div>
+      <div class="form-group">
+        <label>Model</label>
+        <select class="form-control model-select" name="model[]" required></select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Daily Usage (Hours/Day)</label>
+        <input type="number" min="0.1" max="24" step="0.5" class="form-control usage-time" name="usage_time[]" value="4.0" required />
+      </div>
+      <div class="form-group">
+        <label>Quantity</label>
+        <input type="number" min="1" class="form-control quantity" name="quantity[]" value="1" required />
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Days Used per Week</label>
+        <input type="number" min="1" max="7" class="form-control days-used" name="days_used_per_week[]" value="7" required />
+      </div>
+      <div class="form-group">
+        <label>Power Rating (Watts)</label>
+        <input type="number" step="any" class="form-control power-rating" name="power_rating[]" placeholder="Power in Watts" required />
+      </div>
+    </div>
+
+    <div class="wattage-badge-container"></div>
+  </div>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const applianceData = {
+    "home": [
+      { "appliance": "Ceiling Fan", "brands": [{ "name": "Usha", "models": ["Swift", "Striker"], "wattage": [75, 70] }, { "name": "Orient", "models": ["Aeroquiet", "Summer Cool"], "wattage": [65, 72] }] },
+      { "appliance": "LED Bulb / Light", "brands": [{ "name": "Philips", "models": ["Cool Daylight 9W", "Warm White 12W"], "wattage": [9, 12] }, { "name": "Wipro", "models": ["Garnet 9W", "Smart Bulb 12W"], "wattage": [9, 12] }] },
+      { "appliance": "Refrigerator", "brands": [{ "name": "LG", "models": ["190L Single Door", "260L Double Door"], "wattage": [120, 200] }, { "name": "Samsung", "models": ["253L Digital Inverter", "275L Frost Free"], "wattage": [130, 220] }] },
+      { "appliance": "Air Conditioner", "brands": [{ "name": "Voltas", "models": ["1.0 Ton 3 Star", "1.5 Ton 5 Star"], "wattage": [1200, 1500] }, { "name": "Daikin", "models": ["FTKM35TV", "FTKF50TV Inverter"], "wattage": [1100, 1700] }] }
+    ],
+    "hospital": [
+      { "appliance": "Ventilator", "brands": [{ "name": "Dräger", "models": ["Evita Infinity V500", "Savina 300"], "wattage": [300, 400] }, { "name": "GE Healthcare", "models": ["Engström", "Carestation 600"], "wattage": [350, 500] }] }
+    ],
+    "office": [
+      { "appliance": "Workstation PC", "brands": [{ "name": "Dell", "models": ["OptiPlex 7090", "Precision 3650"], "wattage": [250, 500] }, { "name": "HP", "models": ["EliteDesk 800", "Z2 Tower"], "wattage": [260, 480] }] }
+    ],
+    "factory": [
+      { "appliance": "Induction Motor", "brands": [{ "name": "Siemens", "models": ["1LE1001 5HP", "1LE1001 10HP"], "wattage": [3700, 7500] }] }
+    ]
+  };
+
+  function goToStep(step) {
+    document.getElementById('step1').style.display = step === 1 ? 'block' : 'none';
+    document.getElementById('step2').style.display = step === 2 ? 'block' : 'none';
+
+    const pill1 = document.getElementById('pill1');
+    const pill2 = document.getElementById('pill2');
+
+    if (step === 1) {
+      pill1.className = 'badge badge-emerald';
+      pill2.style.background = 'var(--bg-hover)';
+      pill2.style.color = 'var(--text-muted)';
+    } else {
+      pill2.className = 'badge badge-emerald';
+      pill1.style.background = 'var(--bg-hover)';
+      pill1.style.color = 'var(--text-muted)';
+      if (document.getElementById('applianceContainer').children.length === 0) {
+        addAppliance();
+      }
+    }
+  }
+
+  function createOption(text, value = text) {
+    const option = document.createElement('option');
+    option.textContent = text;
+    option.value = value;
+    return option;
+  }
+
+  function updateSubmitState() {
+    const count = document.getElementById('applianceContainer').children.length;
+    document.getElementById('submitBtn').disabled = count === 0;
+  }
+
+  function addAppliance() {
+    const purpose = document.getElementById('purposeSelect').value || 'home';
+    const template = document.getElementById('applianceTemplate').content.cloneNode(true);
+    const section = template.children[0];
+
+    const applianceSelect = section.querySelector('.appliance-select');
+    const brandSelect = section.querySelector('.brand-select');
+    const modelSelect = section.querySelector('.model-select');
+    const powerInput = section.querySelector('.power-rating');
+    const badgeContainer = section.querySelector('.wattage-badge-container');
+
+    applianceSelect.innerHTML = '<option value="">-- Select Appliance --</option>';
+    const list = applianceData[purpose] || applianceData['home'];
+    list.forEach(item => applianceSelect.appendChild(createOption(item.appliance)));
+
+    applianceSelect.addEventListener('change', () => {
+      const found = list.find(a => a.appliance === applianceSelect.value);
+      brandSelect.innerHTML = '<option value="">-- Select Brand --</option>';
+      modelSelect.innerHTML = '<option value="">-- Select Model --</option>';
+      badgeContainer.innerHTML = '';
+      if (found) {
+        found.brands.forEach(b => brandSelect.appendChild(createOption(b.name)));
+      }
+    });
+
+    brandSelect.addEventListener('change', () => {
+      const foundApp = list.find(a => a.appliance === applianceSelect.value);
+      const foundBrand = foundApp?.brands.find(b => b.name === brandSelect.value);
+      modelSelect.innerHTML = '<option value="">-- Select Model --</option>';
+      badgeContainer.innerHTML = '';
+      if (foundBrand) {
+        foundBrand.models.forEach((mod, idx) => {
+          const opt = createOption(mod);
+          opt.dataset.wattage = foundBrand.wattage[idx];
+          modelSelect.appendChild(opt);
+        });
+      }
+    });
+
+    modelSelect.addEventListener('change', () => {
+      const opt = modelSelect.selectedOptions[0];
+      const watt = opt?.dataset?.wattage;
+      if (watt) {
+        powerInput.value = watt;
+        badgeContainer.innerHTML = `<div style="margin-top: 0.5rem;"><span class="badge badge-emerald">Preset Rating: ${watt} Watts</span></div>`;
+      }
+    });
+
+    document.getElementById('applianceContainer').appendChild(section);
+    updateSubmitState();
+  }
+
+  document.getElementById('purposeSelect').addEventListener('change', function () {
+    const valid = !!this.value;
+    document.getElementById('step1NextBtn').disabled = !valid;
+    document.getElementById('applianceContainer').innerHTML = '';
+    updateSubmitState();
+  });
+</script>
+{% endblock %}

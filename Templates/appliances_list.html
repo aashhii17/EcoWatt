@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Appliance Assets Directory | VoltPulse Enterprise{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title-group">
+    <h1>Hardware Assets Directory</h1>
+    <p>Complete registry of provisioned appliances and power ratings.</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'add_appliances' %}" class="btn btn-primary">+ Register Asset</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-container">
+    <table class="enterprise-table">
+      <thead>
+        <tr>
+          <th>Asset Name</th>
+          <th>Power Rating</th>
+          <th>Quantity</th>
+          <th>Daily Usage</th>
+          <th>Monthly kWh</th>
+          <th style="text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in appliances %}
+          <tr>
+            <td><strong>{{ a.name }}</strong></td>
+            <td><span class="badge badge-blue">{{ a.power_rating }} W</span></td>
+            <td>{{ a.quantity }}</td>
+            <td>{{ a.usage_time }} hrs/day</td>
+            <td><strong>{{ a.monthly_kwh|floatformat:2 }}</strong> kWh</td>
+            <td style="text-align: right;">
+              <form method="post" action="{% url 'remove_appliance' a.id %}" style="display:inline;" onsubmit="return confirm('Remove {{ a.name }}?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+              </form>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" style="text-align:center; color:var(--text-muted); padding:2rem;">No appliances registered.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

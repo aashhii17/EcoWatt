@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Grid Telemetry Reports | VoltPulse Enterprise{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title-group">
+    <h1>Telemetry Reports Archive</h1>
+    <p>Historical system load summaries, carbon emissions, and efficiency indexes.</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'export_user_data' %}" class="btn btn-primary">Export Excel Report</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-container">
+    <table class="enterprise-table">
+      <thead>
+        <tr>
+          <th>Report Date</th>
+          <th>Total Consumption</th>
+          <th>Total Cost ($)</th>
+          <th>Efficiency Index</th>
+          <th>Carbon Impact (kg)</th>
+          <th>Est. Savings ($)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in reports %}
+          <tr>
+            <td><strong>{{ r.report_date }}</strong></td>
+            <td>{{ r.total_consumption_kwh }} kWh</td>
+            <td>${{ r.total_cost }}</td>
+            <td><span class="badge badge-emerald">{{ r.efficiency }}%</span></td>
+            <td>{{ r.co2_emissions_kg }} kg</td>
+            <td>${{ r.savings_amount }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" style="text-align:center; color:var(--text-muted); padding:2rem;">No historical reports generated yet. Click "Sync Telemetry" on Dashboard.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

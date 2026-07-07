@@ -1,0 +1,391 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard | EcoWatt Energy{% endblock %}
+
+{% block content %}
+<!-- Page Title & Header Actions -->
+<div class="page-header">
+  <div class="page-title-group">
+    <h1>Energy Overview</h1>
+    <p>Track your power consumption, predict monthly utility bills, and optimize appliance efficiency.</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-primary" onclick="openModal('addModal')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      <span>Add Appliance</span>
+    </button>
+
+    <a href="{% url 'generate_predictions' %}" class="btn btn-secondary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+      </svg>
+      <span>Refresh Model</span>
+    </a>
+
+    <a href="{% url 'export_user_data' %}" class="btn btn-secondary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+      <span>Export Excel</span>
+    </a>
+  </div>
+</div>
+
+<!-- Key Metric Summary Cards -->
+<section class="kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-label">Monthly Usage</span>
+      <div class="kpi-icon-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+        </svg>
+      </div>
+    </div>
+    <div class="kpi-value-row">
+      <span class="kpi-value">{{ total_consumption }}</span>
+      <span class="kpi-unit">kWh</span>
+    </div>
+    <div class="kpi-footer">
+      <span>Est. Daily Peak: {{ peak_load_kwh }} kWh/day</span>
+    </div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-label">Estimated Monthly Bill</span>
+      <div class="kpi-icon-box" style="background-color: #eff6ff; color: #2563eb;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="1" x2="12" y2="23"></line>
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+        </svg>
+      </div>
+    </div>
+    <div class="kpi-value-row">
+      <span class="kpi-value">${{ total_cost }}</span>
+      <span class="kpi-unit">USD</span>
+    </div>
+    <div class="kpi-footer">
+      <span>Base Tariff: $0.14 / kWh</span>
+    </div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-label">Efficiency Rating</span>
+      <div class="kpi-icon-box" style="background-color: #ecfdf5; color: #10b981;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </div>
+    </div>
+    <div class="kpi-value-row">
+      <span class="kpi-value">{{ efficiency }}%</span>
+    </div>
+    <div class="kpi-footer">
+      <span style="color: var(--status-emerald-text); font-weight: 600;">Potential Savings: ${{ estimated_savings }}/mo</span>
+    </div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <span class="kpi-label">Carbon Footprint</span>
+      <div class="kpi-icon-box" style="background-color: #fffbe6; color: #d97706;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.4 19 2c1 2 2 4.1 2 8 0 5.5-4.5 10-10 10Z"></path>
+          <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
+        </svg>
+      </div>
+    </div>
+    <div class="kpi-value-row">
+      <span class="kpi-value">{{ co2_emissions_kg }}</span>
+      <span class="kpi-unit">kg CO₂</span>
+    </div>
+    <div class="kpi-footer">
+      <span>Eco Factor: 0.85 kg/kWh</span>
+    </div>
+  </div>
+</section>
+
+<!-- Interactive Load Charts & What-If Energy Simulator Grid -->
+<section class="charts-grid">
+  <!-- Chart 1: 7-Day Forecast -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+        Predicted Daily Consumption (kWh)
+      </h3>
+    </div>
+    <canvas id="forecastChart" height="110"></canvas>
+  </div>
+
+  <!-- Chart 2: Appliance Share -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+          <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+        </svg>
+        Usage Breakdown by Appliance
+      </h3>
+    </div>
+    <canvas id="applianceDistributionChart" height="220"></canvas>
+  </div>
+</section>
+
+<!-- Interactive Bill Savings Simulator -->
+<section class="card">
+  <div class="card-header">
+    <h3 class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      Interactive Savings Calculator
+    </h3>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: center;">
+    <div>
+      <p style="color: var(--text-secondary); font-size: 0.9rem;">
+        Drag the slider below to see how reducing daily heavy appliance usage (e.g., Air Conditioner / Heater) impacts your monthly bill and carbon emissions:
+      </p>
+
+      <div style="margin-top: 1rem;">
+        <label style="font-weight: 600; font-size: 0.85rem;">Reduce usage by: <span id="hoursVal" style="color: var(--brand-emerald); font-weight: 800; font-size: 1.1rem;">2</span> hours/day</label>
+        <input type="range" id="simSlider" min="0" max="6" step="0.5" value="2" class="simulator-slider" oninput="updateSimulator(this.value)">
+      </div>
+    </div>
+
+    <div class="simulator-box">
+      <div class="simulator-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        Estimated Monthly Impact
+      </div>
+      <div style="font-size: 1.6rem; font-weight: 800; color: var(--status-emerald-text); margin: 0.5rem 0;">
+        Save <span id="simSavings">${{ estimated_savings }}</span> / month
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">
+        Prevents <span id="simCO2" style="font-weight: 700;">22.5</span> kg of CO₂ emissions every month.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Appliance Inventory Table -->
+<section class="card">
+  <div class="table-toolbar">
+    <h3 class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+        <line x1="8" y1="21" x2="16" y2="21"></line>
+        <line x1="12" y1="17" x2="12" y2="21"></line>
+      </svg>
+      Your Appliances
+    </h3>
+
+    <div class="table-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="text" id="tableSearchInput" placeholder="Search appliances...">
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table class="enterprise-table">
+      <thead>
+        <tr>
+          <th>Appliance Name</th>
+          <th>Power Rating</th>
+          <th>Qty</th>
+          <th>Daily Usage</th>
+          <th>Days/Week</th>
+          <th>Est. Monthly kWh</th>
+          <th>Est. Cost ($)</th>
+          <th>CO₂ (kg)</th>
+          <th style="text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in appliances_data %}
+          <tr>
+            <td><strong>{{ a.name }}</strong></td>
+            <td><span class="badge badge-emerald">{{ a.power_rating }} W</span></td>
+            <td>{{ a.quantity }}</td>
+            <td>{{ a.usage_time }} hrs</td>
+            <td>{{ a.days_used_per_week }} days</td>
+            <td><strong>{{ a.consumption }}</strong> kWh</td>
+            <td>${{ a.cost }}</td>
+            <td>{{ a.co2 }} kg</td>
+            <td style="text-align: right;">
+              <form method="post" action="{% url 'remove_appliance' a.id %}" style="display:inline;" onsubmit="return confirm('Remove appliance {{ a.name }}?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+              </form>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="9" style="text-align:center; color:var(--text-muted); padding:2rem;">No appliances registered yet. Click "+ Add Appliance" to get started!</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Modal for Adding Appliance -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Add New Appliance</h3>
+      <button class="modal-close-btn" onclick="closeModal('addModal')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form method="post" action="{% url 'add_appliances' %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label>Appliance Name</label>
+          <input type="text" name="name" class="form-control" placeholder="e.g. Living Room Air Conditioner" required />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Brand (Optional)</label>
+            <input type="text" name="brand" class="form-control" placeholder="e.g. LG / Daikin" />
+          </div>
+          <div class="form-group">
+            <label>Model (Optional)</label>
+            <input type="text" name="model" class="form-control" placeholder="e.g. FTKF50" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Power Rating (Watts)</label>
+            <input type="number" step="any" name="power_rating" class="form-control" placeholder="e.g. 1500" required />
+          </div>
+          <div class="form-group">
+            <label>Quantity</label>
+            <input type="number" name="quantity" class="form-control" value="1" min="1" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Daily Usage (Hours)</label>
+            <input type="number" step="0.5" name="usage_time" class="form-control" value="4.0" required />
+          </div>
+          <div class="form-group">
+            <label>Days per Week</label>
+            <input type="number" name="days_used_per_week" class="form-control" value="7" min="1" max="7" required />
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('addModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Appliance</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const forecastDates = {{ forecast_dates|safe }};
+  const forecastKwh = {{ forecast_kwh|safe }};
+  const applianceNames = {{ appliance_names|safe }};
+  const applianceConsumptions = {{ appliance_consumptions|safe }};
+
+  // Chart 1: Daily Consumption Line Chart
+  const ctx1 = document.getElementById('forecastChart').getContext('2d');
+  const gradient1 = ctx1.createLinearGradient(0, 0, 0, 300);
+  gradient1.addColorStop(0, 'rgba(16, 185, 129, 0.25)');
+  gradient1.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+  new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels: forecastDates,
+      datasets: [{
+        label: 'Predicted Usage (kWh)',
+        data: forecastKwh,
+        borderColor: '#10b981',
+        backgroundColor: gradient1,
+        borderWidth: 3,
+        tension: 0.35,
+        fill: true,
+        pointBackgroundColor: '#059669',
+        pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { font: { family: 'Plus Jakarta Sans' } } }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { grid: { color: '#e2e8f0' } }
+      }
+    }
+  });
+
+  // Chart 2: Appliance Share Donut Chart
+  const ctx2 = document.getElementById('applianceDistributionChart').getContext('2d');
+  new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+      labels: applianceNames,
+      datasets: [{
+        data: applianceConsumptions,
+        backgroundColor: ['#10b981', '#2563eb', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans' } } }
+      }
+    }
+  });
+
+  // Simulator calculation
+  function updateSimulator(hours) {
+    document.getElementById('hoursVal').textContent = hours;
+    const baseSavings = {{ estimated_savings|default:15 }};
+    const factor = hours / 2.0;
+    const savings = (baseSavings * factor).toFixed(2);
+    const co2 = (hours * 11.25).toFixed(1);
+
+    document.getElementById('simSavings').textContent = '$' + savings;
+    document.getElementById('simCO2').textContent = co2;
+  }
+</script>
+{% endblock %}

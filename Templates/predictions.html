@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Bill & Usage Forecast | EcoWatt Energy{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title-group">
+    <h1>Bill & Usage Forecast</h1>
+    <p>Predictive daily power consumption, equipment efficiency, and anomaly detection.</p>
+  </div>
+  <div class="page-actions">
+    <a href="{% url 'generate_predictions' %}" class="btn btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+      </svg>
+      <span>Refresh Predictions</span>
+    </a>
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+      <span>Back to Dashboard</span>
+    </a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-toolbar">
+    <h3 class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+      </svg>
+      Forecast Breakdown
+    </h3>
+
+    <div class="table-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="text" id="tableSearchInput" placeholder="Search date or appliance...">
+    </div>
+  </div>
+
+  <div class="table-container">
+    <table class="enterprise-table">
+      <thead>
+        <tr>
+          <th>Target Date</th>
+          <th>Appliance</th>
+          <th>Predicted Usage (kWh)</th>
+          <th>Model Confidence</th>
+          <th>Status</th>
+          <th>Energy Advice</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in predictions %}
+          <tr>
+            <td><strong>{{ p.predicted_date }}</strong></td>
+            <td>{{ p.appliance.name }}</td>
+            <td><strong>{{ p.predicted_consumption_kwh }}</strong> kWh</td>
+            <td><span class="badge badge-blue">{{ p.confidence_score|floatformat:2 }}</span></td>
+            <td>
+              {% if p.is_anomaly %}
+                <span class="badge badge-rose">High Usage Alert</span>
+              {% else %}
+                <span class="badge badge-emerald">Optimal</span>
+              {% endif %}
+            </td>
+            <td style="font-size:0.85rem; color:var(--text-secondary);">{{ p.recommendation }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" style="text-align:center; color:var(--text-muted); padding:2rem;">No forecasts available. Click "Refresh Predictions" to calculate usage predictions.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
