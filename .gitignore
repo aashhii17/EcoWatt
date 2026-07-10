@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Virtual Environment
+django_backend/venv/
+venv/
+env/
+ENV/
+.venv/
+.env
+
+# Django specific
+django_backend/db.sqlite3
+db.sqlite3
+django_backend/staticfiles/
+staticfiles/
+media/
+
+# IDE files
+.vscode/
+.idea/
+
+# Temporary / OS files
+~$*
+Thumbs.db
+.DS_Store

@@ -115,7 +115,7 @@
 
           <a href="{% url 'profile' %}" class="user-profile-menu">
             <div class="user-avatar">{{ request.user.username|slice:":1"|upper }}</div>
-            <span style="font-weight: 600; font-size: 0.85rem;">{{ request.user.get_full_name|default:request.user.username }}</span>
+            <span style="font-weight: 600; font-size: 0.85rem;">{{ request.user.profile.full_name|default:request.user.get_full_name|default:request.user.username }}</span>
           </a>
 
           <a href="{% url 'logout' %}" class="btn btn-secondary btn-sm" title="Sign Out">
