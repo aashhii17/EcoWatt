@@ -316,11 +316,19 @@
 {% endblock %}
 
 {% block extra_js %}
+
+<script id="forecast-dates-data" type="application/json">{{ forecast_dates|safe }}</script>
+<script id="forecast-kwh-data" type="application/json">{{ forecast_kwh|safe }}</script>
+<script id="appliance-names-data" type="application/json">{{ appliance_names|safe }}</script>
+<script id="appliance-consumptions-data" type="application/json">{{ appliance_consumptions|safe }}</script>
+<script id="estimated-savings-data" type="application/json">{{ estimated_savings|default:15 }}</script>
+
 <script>
-  const forecastDates = {{ forecast_dates|safe }};
-  const forecastKwh = {{ forecast_kwh|safe }};
-  const applianceNames = {{ appliance_names|safe }};
-  const applianceConsumptions = {{ appliance_consumptions|safe }};
+  const forecastDates = JSON.parse(document.getElementById('forecast-dates-data').textContent);
+  const forecastKwh = JSON.parse(document.getElementById('forecast-kwh-data').textContent);
+  const applianceNames = JSON.parse(document.getElementById('appliance-names-data').textContent);
+  const applianceConsumptions = JSON.parse(document.getElementById('appliance-consumptions-data').textContent);
+
 
   // Chart 1: Daily Consumption Line Chart
   const ctx1 = document.getElementById('forecastChart').getContext('2d');
@@ -379,7 +387,7 @@
   // Simulator calculation
   function updateSimulator(hours) {
     document.getElementById('hoursVal').textContent = hours;
-    const baseSavings = {{ estimated_savings|default:15 }};
+    const baseSavings = parseFloat(document.getElementById('estimated-savings-data').textContent);
     const factor = hours / 2.0;
     const savings = (baseSavings * factor).toFixed(2);
     const co2 = (hours * 11.25).toFixed(1);

@@ -27,6 +27,12 @@ DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 't')
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost,localhost:8000,*').split(',')
 
+# Automatically add Render's external hostname if deployed on Render
+render_external_hostname = os.getenv('RENDER_EXTERNAL_HOSTNAME')
+if render_external_hostname:
+    ALLOWED_HOSTS.append(render_external_hostname)
+
+
 CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1',
     'http://127.0.0.1:8000',
